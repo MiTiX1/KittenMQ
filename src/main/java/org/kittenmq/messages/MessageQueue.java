@@ -1,4 +1,4 @@
-package org.kittenmq;
+package org.kittenmq.messages;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
