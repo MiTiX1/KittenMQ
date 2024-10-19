@@ -1,17 +1,19 @@
 package org.kittenmq.consumers;
 
-import org.kittenmq.MessageQueue;
+
+import org.kittenmq.messages.Message;
+import org.kittenmq.messages.MessageQueue;
 
 public class Consumer<T> {
-    private final MessageQueue<T> queue;
+    private final MessageQueue<Message<T>> queue;
 
-    public Consumer(MessageQueue<T> queue) {
+    public Consumer(MessageQueue<Message<T>> queue) {
         this.queue = queue;
     }
 
-    public void consume(ConsumerCallback<T> callback) throws InterruptedException {
+    public void consume(ConsumerCallback<Message<T>> callback) throws InterruptedException {
         while (true) {
-            T message = this.queue.dequeue();
+            Message<T> message = this.queue.dequeue();
             callback.process(message);
         }
     }
