@@ -2,14 +2,13 @@ package org.kittenmq.brokers;
 
 import org.kittenmq.messages.Message;
 import org.kittenmq.messages.MessageQueue;
-import org.kittenmq.producers.Producer;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class Broker {
-    private final Map<String, MessageQueue<Message<?>>> queues = new HashMap<>();
-    private final MessageQueue<Message<?>> deadLetterQueue;
+public class Broker<T> {
+    private final Map<String, MessageQueue<Message<T>>> queues = new HashMap<>();
+    private final MessageQueue<Message<T>> deadLetterQueue;
     private final String messageStorePath;
 
     public Broker() {
@@ -28,11 +27,11 @@ public class Broker {
         }
     }
 
-    public MessageQueue<Message<?>> getQueue(String queueName) {
+    public MessageQueue<Message<T>> getQueue(String queueName) {
         return queues.get(queueName);
     }
 
-    public MessageQueue<Message<?>> getDeadLetterQueue() {
-        return deadLetterQueue;
+    public MessageQueue<Message<T>> getDeadLetterQueue() {
+        return this.deadLetterQueue;
     }
 }
