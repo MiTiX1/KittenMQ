@@ -1,5 +1,7 @@
 package org.kittenmq.consumers;
 
+import org.kittenmq.messages.Message;
+
 public class ConsumerRunner<T> {
     private final Consumer<T> consumer;
 
@@ -10,7 +12,7 @@ public class ConsumerRunner<T> {
     public void run(ConsumerCallback<T> callback) {
         Thread thread = new Thread(() -> {
             try {
-                consumer.consume(callback);
+                consumer.consume((ConsumerCallback<Message<T>>) callback);
             } catch (Exception e) {
                 Thread.currentThread().interrupt();
             }
