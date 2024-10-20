@@ -6,10 +6,12 @@ import org.kittenmq.messages.Message;
 import org.kittenmq.messages.MessageQueue;
 
 public class Consumer<T> {
+    private final String name;
     private final Broker broker;
     private final String queueName;
 
-    public Consumer(Broker broker, String queueName) {
+    public Consumer(String name, Broker broker, String queueName) {
+        this.name = name;
         this.broker = broker;
         this.queueName = queueName;
     }
@@ -24,5 +26,9 @@ public class Consumer<T> {
             Message<T> message = (Message<T>) queue.dequeue();
             callback.process(message);
         }
+    }
+
+    public String getName() {
+        return this.name;
     }
 }
