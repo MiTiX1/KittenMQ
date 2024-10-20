@@ -4,6 +4,7 @@ import org.kittenmq.errors.ErrorHandler;
 
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -13,6 +14,7 @@ public class MessageQueue<T> {
     private final BlockingQueue<T> queue = new LinkedBlockingQueue<>();;
     private final MessageQueue<T> deadLetterQueue;
     private final MessageStore<T> messageStore;
+    private final List<AcknowledgmentListener<T>> acknowledgmentListeners = new ArrayList<>();
     private final String name;
 
     public MessageQueue(String name, MessageQueue<T> deadLetterQueue, String messageStorePath) {
@@ -21,8 +23,9 @@ public class MessageQueue<T> {
         this.messageStore = new MessageStore<>(Paths.get(messageStorePath, this.name + ".dat").toString());
     }
 
-    public void enqueue(T message) throws InterruptedException {
+    public void enqueue(T message) throws InterruptedException, IOException {
         this.queue.put(message);
+        messageStore.save(message);
     }
 
     public T dequeue() throws InterruptedException {
@@ -33,7 +36,7 @@ public class MessageQueue<T> {
         return this.queue.poll(timeout, unit);
     }
 
-    public void moveToDeadLetterQueue(T message) throws InterruptedException {
+    public void moveToDeadLetterQueue(T message) throws InterruptedException, IOException {
         if (this.deadLetterQueue != null) {
             this.deadLetterQueue.enqueue(message);
         }
@@ -45,13 +48,37 @@ public class MessageQueue<T> {
 
     private void loadMessages() {
         try {
-            List<Message<T>> messages = this.messageStore.loadAll();
-            for (Message<T> message : messages) {
-                this.queue.put((T) message);
+            List<T> messages = this.messageStore.loadAll();
+            for (T message : messages) {
+                this.queue.put(message);
             }
         } catch (IOException | InterruptedException e) {
             ErrorHandler.logError("Error loading messages", e);
         }
+    }
+
+    public void registerAcknowledgmentListener(AcknowledgmentListener<T> listener) {
+        acknowledgmentListeners.add(listener);
+    }
+
+    private void removeAcknowledgedMessage(T message) {
+        try {
+            List<T> messages = messageStore.loadAll();
+            messages.removeIf(m -> m.equals(message));
+            messageStore.clear();
+            for (T m : messages) {
+                messageStore.save(m);
+            }
+        } catch (IOException e) {
+            ErrorHandler.logError("Error removing acknowledged message", e);
+        }
+    }
+
+    public void processAcknowledgment(AcknowledgmentEvent<T> event) {
+        for (AcknowledgmentListener<T> listener : acknowledgmentListeners) {
+            listener.onMessageAcknowledged(event);
+        }
+        this.removeAcknowledgedMessage(event.getMessage());
     }
 
     public String getName() {

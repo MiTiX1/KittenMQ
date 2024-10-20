@@ -3,9 +3,11 @@ package org.kittenmq.consumers;
 
 import org.kittenmq.brokers.Broker;
 import org.kittenmq.errors.ErrorHandler;
+import org.kittenmq.messages.AcknowledgmentEvent;
 import org.kittenmq.messages.Message;
 import org.kittenmq.messages.MessageQueue;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 public class Consumer<T> {
@@ -19,27 +21,29 @@ public class Consumer<T> {
         this.queueName = queueName;
     }
 
-    public void consume(ConsumerCallback<Message<T>> callback) throws InterruptedException {
-        MessageQueue<Message<?>> queue = broker.getQueue(queueName);
+    public <T> void consume(ConsumerCallback<T> callback) throws InterruptedException {
+        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
 
         while (true) {
-            Message<T> message = (Message<T>) queue.dequeue();
+            T message = (T) queue.dequeue();
             callback.process(message);
+            AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+            queue.processAcknowledgment(event);
         }
     }
 
-    public void consume(ConsumerCallback<Message<T>> callback, int maxRetries, int retryDelay) throws InterruptedException {
-        MessageQueue<Message<?>> queue = broker.getQueue(queueName);
+    public <T> void consume(ConsumerCallback<T> callback, int maxRetries, int retryDelay) throws InterruptedException {
+        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
 
         while (true) {
             try {
-                Message<T> message = (Message<T>) queue.dequeue();
+                T message = (T) queue.dequeue();
                 if (message == null) {
                     continue;
                 }
@@ -50,6 +54,8 @@ public class Consumer<T> {
                 while (retryCount < maxRetries) {
                     try {
                         callback.process(message);
+                        AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+                        queue.processAcknowledgment(event);
                         success = true;
                         break;
                     } catch (Exception e) {
@@ -69,8 +75,8 @@ public class Consumer<T> {
         }
     }
 
-    public void consume(ConsumerCallback<Message<T>> callback, long timeout) throws InterruptedException {
-        MessageQueue<Message<?>> queue = broker.getQueue(queueName);
+    public <T> void consume(ConsumerCallback<T> callback, long timeout) throws InterruptedException, IOException {
+        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
@@ -79,11 +85,13 @@ public class Consumer<T> {
         long endTime = startTime + timeout;
 
         while (System.currentTimeMillis() < endTime) {
-            Message<T> message = (Message<T>) queue.dequeue(timeout, TimeUnit.MILLISECONDS);
+            T message = (T) queue.dequeue(timeout, TimeUnit.MILLISECONDS);
 
             if (message != null) {
                 try {
                     callback.process(message);
+                    AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+                    queue.processAcknowledgment(event);
                     endTime = System.currentTimeMillis() + timeout;
                 } catch (Exception e) {
                     ErrorHandler.logError("Error processing message", e);
@@ -95,8 +103,8 @@ public class Consumer<T> {
         }
     }
 
-    public void consume(ConsumerCallback<Message<T>> callback, int maxRetries, int retryDelay, long timeout) throws InterruptedException {
-        MessageQueue<Message<?>> queue = broker.getQueue(queueName);
+    public <T> void consume(ConsumerCallback<T> callback, int maxRetries, int retryDelay, long timeout) throws InterruptedException, IOException {
+        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
@@ -105,7 +113,7 @@ public class Consumer<T> {
         long endTime = startTime + timeout;
 
         while (System.currentTimeMillis() < endTime) {
-            Message<T> message = (Message<T>) queue.dequeue(timeout, TimeUnit.MILLISECONDS);
+            T message = (T)  queue.dequeue(timeout, TimeUnit.MILLISECONDS);
 
             if (message != null) {
                 int retryCount = 0;
@@ -114,6 +122,8 @@ public class Consumer<T> {
                 while (retryCount < maxRetries) {
                     try {
                         callback.process(message);
+                        AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+                        queue.processAcknowledgment(event);
                         success = true;
                         endTime = System.currentTimeMillis() + timeout;
                         break;

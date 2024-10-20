@@ -25,20 +25,20 @@ public class MessageStore<T> {
         }
     }
 
-    public List<Message<T>> loadAll() throws IOException {
+    public List<T> loadAll() throws IOException {
         File file = new File(filePath);
         if (!file.exists()) {
             return new ArrayList<>();
         }
         try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-            return (List<Message<T>>) ois.readObject();
+            return (List<T>) ois.readObject();
         } catch (ClassNotFoundException e) {
             throw new IOException("Failed to read messages: " + e.getMessage());
         }
     }
 
-    public void save(Message<T> message) throws IOException {
-        List<Message<T>> messages = new ArrayList<>();
+    public void save(T message) throws IOException {
+        List<T> messages = new ArrayList<>();
         messages.add(message);
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(filePath))) {
             oos.writeObject(messages);

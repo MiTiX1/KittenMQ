@@ -4,6 +4,7 @@ import org.kittenmq.brokers.Broker;
 import org.kittenmq.messages.Message;
 import org.kittenmq.messages.MessageQueue;
 
+import java.io.IOException;
 import java.util.Map;
 
 public class Producer<T> {
@@ -17,7 +18,7 @@ public class Producer<T> {
         this.queueName = queueName;
     }
 
-    public void sendMessage(T payload) throws InterruptedException {
+    public void sendMessage(T payload) throws InterruptedException, IOException {
         MessageQueue<Message<?>> queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
@@ -26,7 +27,7 @@ public class Producer<T> {
         queue.enqueue(message);
     }
 
-    public void sendMessage(T payload, Map<String, String> headers) throws InterruptedException {
+    public void sendMessage(T payload, Map<String, String> headers) throws InterruptedException, IOException {
         MessageQueue<Message<?>> queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);

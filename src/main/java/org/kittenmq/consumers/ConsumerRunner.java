@@ -2,6 +2,8 @@ package org.kittenmq.consumers;
 
 import org.kittenmq.messages.Message;
 
+import java.io.IOException;
+
 public class ConsumerRunner<T> {
     private final Consumer<T> consumer;
 
@@ -36,7 +38,7 @@ public class ConsumerRunner<T> {
         Thread thread = new Thread(() -> {
             try {
                 consumer.consume(callback, timeout);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException e) {
                 Thread.currentThread().interrupt();
                 System.err.println("Consumer thread was interrupted.");
             }
@@ -48,7 +50,7 @@ public class ConsumerRunner<T> {
         Thread thread = new Thread(() -> {
             try {
                 consumer.consume(callback, maxRetries, retryDelay, timeout);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException | IOException e) {
                 Thread.currentThread().interrupt();
                 System.err.println("Consumer thread was interrupted.");
             }
