@@ -5,10 +5,12 @@ import org.kittenmq.messages.Message;
 import org.kittenmq.messages.MessageQueue;
 
 public class Producer<T> {
+    private final String name;
     private final Broker broker;
     private final String queueName;
 
-    public Producer(Broker broker, String queueName) {
+    public Producer(String name, Broker broker, String queueName) {
+        this.name = name;
         this.broker = broker;
         this.queueName = queueName;
     }
@@ -20,5 +22,9 @@ public class Producer<T> {
         }
         Message<T> message = new Message<T>(payload);
         queue.enqueue(message);
+    }
+
+    public String getName() {
+        return this.name;
     }
 }
