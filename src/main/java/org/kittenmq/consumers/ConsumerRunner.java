@@ -19,4 +19,40 @@ public class ConsumerRunner<T> {
         });
         thread.start();
     }
+
+    public void run(ConsumerCallback<Message<T>> callback, int maxRetries, int retryDelay) {
+        Thread thread = new Thread(() -> {
+            try {
+                consumer.consume(callback, maxRetries, retryDelay);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Consumer thread was interrupted.");
+            }
+        });
+        thread.start();
+    }
+
+    public void run(ConsumerCallback<Message<T>> callback, long timeout) {
+        Thread thread = new Thread(() -> {
+            try {
+                consumer.consume(callback, timeout);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Consumer thread was interrupted.");
+            }
+        });
+        thread.start();
+    }
+
+    public void run(ConsumerCallback<Message<T>> callback, int maxRetries, int retryDelay, long timeout) {
+        Thread thread = new Thread(() -> {
+            try {
+                consumer.consume(callback, maxRetries, retryDelay, timeout);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                System.err.println("Consumer thread was interrupted.");
+            }
+        });
+        thread.start();
+    }
 }
