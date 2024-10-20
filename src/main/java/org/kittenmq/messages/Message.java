@@ -1,10 +1,14 @@
 package org.kittenmq.messages;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class Message<T> {
+public class Message<T> implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
     private final UUID uuid;
     private final long timestamp;
     private final Map<String, String> headers;
