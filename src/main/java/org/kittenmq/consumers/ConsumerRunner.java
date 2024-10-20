@@ -14,7 +14,7 @@ public class ConsumerRunner<T> {
     public void run(ConsumerCallback<T> callback) {
         Thread thread = new Thread(() -> {
             try {
-                consumer.consume((ConsumerCallback<Message<T>>) callback);
+                consumer.consume(callback);
             } catch (Exception e) {
                 Thread.currentThread().interrupt();
             }
@@ -22,7 +22,7 @@ public class ConsumerRunner<T> {
         thread.start();
     }
 
-    public void run(ConsumerCallback<Message<T>> callback, int maxRetries, int retryDelay) {
+    public void run(ConsumerCallback<T> callback, int maxRetries, int retryDelay) {
         Thread thread = new Thread(() -> {
             try {
                 consumer.consume(callback, maxRetries, retryDelay);
@@ -34,7 +34,7 @@ public class ConsumerRunner<T> {
         thread.start();
     }
 
-    public void run(ConsumerCallback<Message<T>> callback, long timeout) {
+    public void run(ConsumerCallback<T> callback, long timeout) {
         Thread thread = new Thread(() -> {
             try {
                 consumer.consume(callback, timeout);
@@ -46,7 +46,7 @@ public class ConsumerRunner<T> {
         thread.start();
     }
 
-    public void run(ConsumerCallback<Message<T>> callback, int maxRetries, int retryDelay, long timeout) {
+    public void run(ConsumerCallback<T> callback, int maxRetries, int retryDelay, long timeout) {
         Thread thread = new Thread(() -> {
             try {
                 consumer.consume(callback, maxRetries, retryDelay, timeout);

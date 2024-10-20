@@ -1,5 +1,7 @@
 package org.kittenmq.consumers;
 
+import org.kittenmq.messages.Message;
+
 public interface ConsumerCallback<T> {
-    void process(T message);
+    void process(Message<T> message);
 }

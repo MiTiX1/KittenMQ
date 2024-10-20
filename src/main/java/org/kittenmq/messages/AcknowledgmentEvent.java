@@ -1,13 +1,13 @@
 package org.kittenmq.messages;
 
 public class AcknowledgmentEvent<T> {
-    private final T message;
+    private final Message<T> message;
 
-    public AcknowledgmentEvent(T message) {
+    public AcknowledgmentEvent(Message<T> message) {
         this.message = message;
     }
 
-    public T getMessage() {
-        return message;
+    public Message<T> getMessage() {
+        return this.message;
     }
 }

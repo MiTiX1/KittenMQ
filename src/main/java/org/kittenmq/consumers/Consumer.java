@@ -21,29 +21,29 @@ public class Consumer<T> {
         this.queueName = queueName;
     }
 
-    public <T> void consume(ConsumerCallback<T> callback) throws InterruptedException {
-        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
+    public void consume(ConsumerCallback<T> callback) throws InterruptedException {
+        MessageQueue queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
 
         while (true) {
-            T message = (T) queue.dequeue();
+            Message message =  queue.dequeue();
             callback.process(message);
-            AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+            AcknowledgmentEvent event = new AcknowledgmentEvent<>(message);
             queue.processAcknowledgment(event);
         }
     }
 
-    public <T> void consume(ConsumerCallback<T> callback, int maxRetries, int retryDelay) throws InterruptedException {
-        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
+    public void consume(ConsumerCallback<T> callback, int maxRetries, int retryDelay) throws InterruptedException {
+        MessageQueue queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
 
         while (true) {
             try {
-                T message = (T) queue.dequeue();
+                Message message =  queue.dequeue();
                 if (message == null) {
                     continue;
                 }
@@ -54,7 +54,7 @@ public class Consumer<T> {
                 while (retryCount < maxRetries) {
                     try {
                         callback.process(message);
-                        AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+                        AcknowledgmentEvent event = new AcknowledgmentEvent<>(message);
                         queue.processAcknowledgment(event);
                         success = true;
                         break;
@@ -75,8 +75,8 @@ public class Consumer<T> {
         }
     }
 
-    public <T> void consume(ConsumerCallback<T> callback, long timeout) throws InterruptedException, IOException {
-        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
+    public void consume(ConsumerCallback<T> callback, long timeout) throws InterruptedException, IOException {
+        MessageQueue queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
@@ -85,12 +85,12 @@ public class Consumer<T> {
         long endTime = startTime + timeout;
 
         while (System.currentTimeMillis() < endTime) {
-            T message = (T) queue.dequeue(timeout, TimeUnit.MILLISECONDS);
+            Message message = queue.dequeue(timeout, TimeUnit.MILLISECONDS);
 
             if (message != null) {
                 try {
                     callback.process(message);
-                    AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+                    AcknowledgmentEvent event = new AcknowledgmentEvent<>(message);
                     queue.processAcknowledgment(event);
                     endTime = System.currentTimeMillis() + timeout;
                 } catch (Exception e) {
@@ -103,8 +103,8 @@ public class Consumer<T> {
         }
     }
 
-    public <T> void consume(ConsumerCallback<T> callback, int maxRetries, int retryDelay, long timeout) throws InterruptedException, IOException {
-        MessageQueue<T> queue = (MessageQueue<T>) broker.getQueue(queueName);
+    public void consume(ConsumerCallback<T> callback, int maxRetries, int retryDelay, long timeout) throws InterruptedException, IOException {
+        MessageQueue queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
@@ -113,7 +113,7 @@ public class Consumer<T> {
         long endTime = startTime + timeout;
 
         while (System.currentTimeMillis() < endTime) {
-            T message = (T)  queue.dequeue(timeout, TimeUnit.MILLISECONDS);
+            Message message = queue.dequeue(timeout, TimeUnit.MILLISECONDS);
 
             if (message != null) {
                 int retryCount = 0;
@@ -122,7 +122,7 @@ public class Consumer<T> {
                 while (retryCount < maxRetries) {
                     try {
                         callback.process(message);
-                        AcknowledgmentEvent<T> event = new AcknowledgmentEvent<>(message);
+                        AcknowledgmentEvent event = new AcknowledgmentEvent<>(message);
                         queue.processAcknowledgment(event);
                         success = true;
                         endTime = System.currentTimeMillis() + timeout;

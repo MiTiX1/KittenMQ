@@ -11,9 +11,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class MessageQueue<T> {
-    private final BlockingQueue<T> queue = new LinkedBlockingQueue<>();;
+    private final BlockingQueue<Message<T>> queue = new LinkedBlockingQueue<>();
     private final MessageQueue<T> deadLetterQueue;
-    private final MessageStore<T> messageStore;
+    private final MessageStore<Message<T>> messageStore;
     private final List<AcknowledgmentListener<T>> acknowledgmentListeners = new ArrayList<>();
     private final String name;
 
@@ -23,20 +23,20 @@ public class MessageQueue<T> {
         this.messageStore = new MessageStore<>(Paths.get(messageStorePath, this.name + ".dat").toString());
     }
 
-    public void enqueue(T message) throws InterruptedException, IOException {
+    public void enqueue(Message<T> message) throws InterruptedException, IOException {
         this.queue.put(message);
         messageStore.save(message);
     }
 
-    public T dequeue() throws InterruptedException {
+    public Message<T> dequeue() throws InterruptedException {
         return this.queue.take();
     }
 
-    public T dequeue(long timeout, TimeUnit unit) throws InterruptedException {
+    public Message<T> dequeue(long timeout, TimeUnit unit) throws InterruptedException {
         return this.queue.poll(timeout, unit);
     }
 
-    public void moveToDeadLetterQueue(T message) throws InterruptedException, IOException {
+    public void moveToDeadLetterQueue(Message<T> message) throws InterruptedException, IOException {
         if (this.deadLetterQueue != null) {
             this.deadLetterQueue.enqueue(message);
         }
@@ -48,8 +48,8 @@ public class MessageQueue<T> {
 
     private void loadMessages() {
         try {
-            List<T> messages = this.messageStore.loadAll();
-            for (T message : messages) {
+            List<Message<T>> messages = this.messageStore.loadAll();
+            for (Message<T> message : messages) {
                 this.queue.put(message);
             }
         } catch (IOException | InterruptedException e) {
@@ -61,12 +61,12 @@ public class MessageQueue<T> {
         acknowledgmentListeners.add(listener);
     }
 
-    private void removeAcknowledgedMessage(T message) {
+    private void removeAcknowledgedMessage(Message<T> message) {
         try {
-            List<T> messages = messageStore.loadAll();
-            messages.removeIf(m -> m.equals(message));
+            List<Message<T>> messages = messageStore.loadAll();
+            messages.removeIf(Message::isAcknowledged);
             messageStore.clear();
-            for (T m : messages) {
+            for (Message<T> m : messages) {
                 messageStore.save(m);
             }
         } catch (IOException e) {

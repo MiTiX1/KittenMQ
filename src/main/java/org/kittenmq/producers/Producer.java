@@ -19,7 +19,7 @@ public class Producer<T> {
     }
 
     public void sendMessage(T payload) throws InterruptedException, IOException {
-        MessageQueue<Message<?>> queue = broker.getQueue(queueName);
+        MessageQueue queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
@@ -28,7 +28,7 @@ public class Producer<T> {
     }
 
     public void sendMessage(T payload, Map<String, String> headers) throws InterruptedException, IOException {
-        MessageQueue<Message<?>> queue = broker.getQueue(queueName);
+        MessageQueue queue = broker.getQueue(queueName);
         if (queue == null) {
             throw new IllegalArgumentException("Queue does not exist: " + queueName);
         }
