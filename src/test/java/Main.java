@@ -25,7 +25,7 @@ public class Main {
         ConsumerRunner<Message<TestMessage>> consumerRunner = new ConsumerRunner<>(consumer);
         consumerRunner.run(message -> {
             System.out.println("Consumed" + message.getPayload());
-        });
+        }, 10000);
 
         TestMessage testMessage1 = new TestMessage("message sent by john", "john", "bob");
         TestMessage testMessage2 = new TestMessage("message sent by bob", "bob", "john");
