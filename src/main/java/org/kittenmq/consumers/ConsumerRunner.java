@@ -1,7 +1,5 @@
 package org.kittenmq.consumers;
 
-import org.kittenmq.messages.Message;
-
 import java.io.IOException;
 
 public class ConsumerRunner<T> {
@@ -11,48 +9,14 @@ public class ConsumerRunner<T> {
         this.consumer = consumer;
     }
 
-    public void run(ConsumerCallback<T> callback) {
+    public void run() {
+        System.out.println("ksbg");
         Thread thread = new Thread(() -> {
             try {
-                consumer.consume(callback);
+
+                consumer.consume();
             } catch (Exception e) {
                 Thread.currentThread().interrupt();
-            }
-        });
-        thread.start();
-    }
-
-    public void run(ConsumerCallback<T> callback, int maxRetries, int retryDelay) {
-        Thread thread = new Thread(() -> {
-            try {
-                consumer.consume(callback, maxRetries, retryDelay);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                System.err.println("Consumer thread was interrupted.");
-            }
-        });
-        thread.start();
-    }
-
-    public void run(ConsumerCallback<T> callback, long timeout) {
-        Thread thread = new Thread(() -> {
-            try {
-                consumer.consume(callback, timeout);
-            } catch (InterruptedException | IOException e) {
-                Thread.currentThread().interrupt();
-                System.err.println("Consumer thread was interrupted.");
-            }
-        });
-        thread.start();
-    }
-
-    public void run(ConsumerCallback<T> callback, int maxRetries, int retryDelay, long timeout) {
-        Thread thread = new Thread(() -> {
-            try {
-                consumer.consume(callback, maxRetries, retryDelay, timeout);
-            } catch (InterruptedException | IOException e) {
-                Thread.currentThread().interrupt();
-                System.err.println("Consumer thread was interrupted.");
             }
         });
         thread.start();

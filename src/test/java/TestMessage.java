@@ -1,4 +1,6 @@
-public class TestMessage {
+import java.io.Serializable;
+
+public class TestMessage implements Serializable {
     private final String message;
     private final String sender;
     private final String receiver;

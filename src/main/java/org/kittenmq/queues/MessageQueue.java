@@ -1,6 +1,10 @@
-package org.kittenmq.messages;
+package org.kittenmq.queues;
 
 import org.kittenmq.errors.ErrorHandler;
+import org.kittenmq.messages.AcknowledgmentEvent;
+import org.kittenmq.messages.AcknowledgmentListener;
+import org.kittenmq.messages.Message;
+import org.kittenmq.messages.MessageStore;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -10,14 +14,14 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-public class MessageQueue<T> {
+public class MessageQueue<T> implements Queue<T> {
     private final BlockingQueue<Message<T>> queue = new LinkedBlockingQueue<>();
-    private final MessageQueue<T> deadLetterQueue;
+    private final DeadLetterQueue<T> deadLetterQueue;
     private final MessageStore<Message<T>> messageStore;
     private final List<AcknowledgmentListener<T>> acknowledgmentListeners = new ArrayList<>();
     private final String name;
 
-    public MessageQueue(String name, MessageQueue<T> deadLetterQueue, String messageStorePath) {
+    public MessageQueue(String name, DeadLetterQueue<T> deadLetterQueue, String messageStorePath) {
         this.name = name;
         this.deadLetterQueue = deadLetterQueue;
         this.messageStore = new MessageStore<>(Paths.get(messageStorePath, this.name + ".dat").toString());
@@ -70,6 +74,7 @@ public class MessageQueue<T> {
                 messageStore.save(m);
             }
         } catch (IOException e) {
+            System.out.println(e.getMessage());
             ErrorHandler.logError("Error removing acknowledged message", e);
         }
     }

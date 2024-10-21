@@ -2,7 +2,7 @@ package org.kittenmq.producers;
 
 import org.kittenmq.brokers.Broker;
 import org.kittenmq.messages.Message;
-import org.kittenmq.messages.MessageQueue;
+import org.kittenmq.queues.MessageQueue;
 
 import java.io.IOException;
 import java.util.Map;
