@@ -2,17 +2,17 @@ package org.kittenmq.producers;
 
 import org.kittenmq.brokers.Broker;
 import org.kittenmq.messages.Message;
-import org.kittenmq.messages.MessageQueue;
+import org.kittenmq.queues.MessageQueue;
 
 import java.io.IOException;
 import java.util.Map;
 
 public class Producer<T> {
     private final String name;
-    private final Broker broker;
+    private final Broker<T> broker;
     private final String queueName;
 
-    public Producer(String name, Broker broker, String queueName) {
+    public Producer(String name, Broker<T> broker, String queueName) {
         this.name = name;
         this.broker = broker;
         this.queueName = queueName;
