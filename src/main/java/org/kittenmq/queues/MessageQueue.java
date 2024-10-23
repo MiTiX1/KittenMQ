@@ -4,7 +4,7 @@ import org.kittenmq.errors.ErrorHandler;
 import org.kittenmq.messages.AcknowledgmentEvent;
 import org.kittenmq.messages.AcknowledgmentListener;
 import org.kittenmq.messages.Message;
-import org.kittenmq.messages.MessageStore;
+import org.kittenmq.persistence.MessageStore;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -17,19 +17,20 @@ import java.util.concurrent.TimeUnit;
 public class MessageQueue<T> implements Queue<T> {
     private final BlockingQueue<Message<T>> queue = new LinkedBlockingQueue<>();
     private final DeadLetterQueue<T> deadLetterQueue;
-    private final MessageStore<Message<T>> messageStore;
+    private final MessageStore<T> messageStore;
     private final List<AcknowledgmentListener<T>> acknowledgmentListeners = new ArrayList<>();
     private final String name;
 
     public MessageQueue(String name, DeadLetterQueue<T> deadLetterQueue, String messageStorePath) {
         this.name = name;
         this.deadLetterQueue = deadLetterQueue;
-        this.messageStore = new MessageStore<>(Paths.get(messageStorePath, this.name + ".dat").toString());
+        this.messageStore = new MessageStore<>(messageStorePath);
+        this.loadMessages();
     }
 
     public void enqueue(Message<T> message) throws InterruptedException, IOException {
         this.queue.put(message);
-        messageStore.save(message);
+        messageStore.storeMessage(message);
     }
 
     public Message<T> dequeue() throws InterruptedException {
@@ -51,13 +52,9 @@ public class MessageQueue<T> implements Queue<T> {
     }
 
     private void loadMessages() {
-        try {
-            List<Message<T>> messages = this.messageStore.loadAll();
-            for (Message<T> message : messages) {
-                this.queue.put(message);
-            }
-        } catch (IOException | InterruptedException e) {
-            ErrorHandler.logError("Error loading messages", e);
+        List<Message<T>> messages = this.messageStore.loadMessages();
+        if (messages != null && !messages.isEmpty()) {
+            queue.addAll(messages);
         }
     }
 
@@ -65,24 +62,11 @@ public class MessageQueue<T> implements Queue<T> {
         acknowledgmentListeners.add(listener);
     }
 
-    private void removeAcknowledgedMessage(Message<T> message) {
-        try {
-            List<Message<T>> messages = messageStore.loadAll();
-            messages.removeIf(Message::isAcknowledged);
-            messageStore.clear();
-            for (Message<T> m : messages) {
-                messageStore.save(m);
-            }
-        } catch (IOException e) {
-            ErrorHandler.logError("Error removing acknowledged message", e);
-        }
-    }
-
     public void processAcknowledgment(AcknowledgmentEvent<T> event) {
         for (AcknowledgmentListener<T> listener : acknowledgmentListeners) {
             listener.onMessageAcknowledged(event);
         }
-        this.removeAcknowledgedMessage(event.getMessage());
+        this.messageStore.acknowledgeMessage(event.getMessage().getUuid());
     }
 
     public String getName() {
