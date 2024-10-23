@@ -1,13 +1,9 @@
 package org.kittenmq.queues;
 
-import org.kittenmq.errors.ErrorHandler;
-import org.kittenmq.messages.AcknowledgmentEvent;
-import org.kittenmq.messages.AcknowledgmentListener;
 import org.kittenmq.messages.Message;
 import org.kittenmq.persistence.MessageStore;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -18,7 +14,6 @@ public class MessageQueue<T> implements Queue<T> {
     private final BlockingQueue<Message<T>> queue = new LinkedBlockingQueue<>();
     private final DeadLetterQueue<T> deadLetterQueue;
     private final MessageStore<T> messageStore;
-    private final List<AcknowledgmentListener<T>> acknowledgmentListeners = new ArrayList<>();
     private final String name;
 
     public MessageQueue(String name, DeadLetterQueue<T> deadLetterQueue, String messageStorePath) {
@@ -29,8 +24,8 @@ public class MessageQueue<T> implements Queue<T> {
     }
 
     public void enqueue(Message<T> message) throws InterruptedException, IOException {
+        this.messageStore.storeMessage(message);
         this.queue.put(message);
-        messageStore.storeMessage(message);
     }
 
     public Message<T> dequeue() throws InterruptedException {
@@ -58,15 +53,8 @@ public class MessageQueue<T> implements Queue<T> {
         }
     }
 
-    public void registerAcknowledgmentListener(AcknowledgmentListener<T> listener) {
-        acknowledgmentListeners.add(listener);
-    }
-
-    public void processAcknowledgment(AcknowledgmentEvent<T> event) {
-        for (AcknowledgmentListener<T> listener : acknowledgmentListeners) {
-            listener.onMessageAcknowledged(event);
-        }
-        this.messageStore.acknowledgeMessage(event.getMessage().getUuid());
+    public void processAcknowledgment(Message<T> message) {
+        this.messageStore.acknowledgeMessage(message.getUuid());
     }
 
     public String getName() {
