@@ -2,6 +2,8 @@ package org.kittenmq.brokers;
 
 import org.kittenmq.consumers.Consumer;
 import org.kittenmq.consumers.ConsumerRunner;
+import org.kittenmq.loadBalancers.LoadBalancer;
+import org.kittenmq.loadBalancers.RoundRobinLoadBalancer;
 import org.kittenmq.messages.Message;
 import org.kittenmq.queues.DeadLetterQueue;
 import org.kittenmq.queues.MessageQueue;
@@ -15,6 +17,7 @@ public class Broker<T> {
     private final Map<String, MessageQueue<Message<T>>> queues = new HashMap<>();
     private final DeadLetterQueue<Message<T>> deadLetterQueue;
     private final Map<String, List<Consumer<T>>> consumers = new HashMap<>();
+    private final Map<String, LoadBalancer<Message<T>>> loadBalancers = new HashMap<>();
     private final String messageStorePath;
 
     public Broker(String messageStorePath) {
@@ -39,11 +42,18 @@ public class Broker<T> {
         this.consumers.get(consumer.getQueueName()).add(consumer);
     }
 
+    public void registerLoadBalancer(RoundRobinLoadBalancer<Message<T>> loadBalancer) {
+        if (!loadBalancers.containsKey(loadBalancer.getQueue().getName())) {
+            this.loadBalancers.put(loadBalancer.getQueue().getName(), loadBalancer);
+        }
+    }
+
     public void run() {
         for (String queueName : this.queues.keySet() ) {
             for (Consumer<T> consumer : this.consumers.get(queueName)) {
                 new ConsumerRunner<>(consumer).run();
             }
+            this.loadBalancers.get(queueName).run();
         }
     }
 
