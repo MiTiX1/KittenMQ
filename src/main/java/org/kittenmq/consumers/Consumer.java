@@ -3,14 +3,14 @@ package org.kittenmq.consumers;
 
 import org.kittenmq.brokers.Broker;
 import org.kittenmq.errors.ErrorHandler;
-import org.kittenmq.messages.AcknowledgmentEvent;
 import org.kittenmq.messages.Message;
+import org.kittenmq.queues.ConsumerMessageQueue;
 import org.kittenmq.queues.MessageQueue;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-public class Consumer<T> {
+public class Consumer<T>{
     private static final int MAX_RETRIES = 3;
     private static final int RETRY_DELAY = 1000;
     private static final long TIMEOUT = 600_000L;
@@ -21,6 +21,8 @@ public class Consumer<T> {
     private final int maxRetries;
     private final int retryDelay;
     private final long timeout;
+    private final ConsumerMessageQueue<T> queue = new ConsumerMessageQueue<>();
+    private boolean isRunning = false;
 
     public Consumer(String name, Broker<T> broker, String queueName, ConsumerCallback<T> callback, int maxRetries, int retryDelay, long timeout) {
         this.name = name;
@@ -44,28 +46,23 @@ public class Consumer<T> {
         this(name, broker, queueName, callback, Consumer.MAX_RETRIES, Consumer.RETRY_DELAY, Consumer.MAX_RETRIES);
     }
 
+    @SuppressWarnings("unchecked")
     public void consume() throws InterruptedException, IOException {
-        MessageQueue queue = broker.getQueue(queueName);
-        if (queue == null) {
-            throw new IllegalArgumentException("Queue does not exist: " + queueName);
-        }
-
         long startTime = System.currentTimeMillis();
         long endTime = startTime + this.timeout;
+        this.isRunning = true;
 
         while (System.currentTimeMillis() < endTime) {
-            Message message = queue.dequeue(this.timeout, TimeUnit.MILLISECONDS);
+            int retryCount = 0;
+            boolean success = false;
+            Message<T> message = this.queue.dequeue(1000, TimeUnit.MILLISECONDS);
 
             if (message != null) {
-                int retryCount = 0;
-                boolean success = false;
-
                 while (retryCount < this.maxRetries) {
                     try {
                         System.out.println("---" + this.getName() + "---");
                         callback.process(message);
-                        AcknowledgmentEvent event = new AcknowledgmentEvent<>(message);
-                        queue.processAcknowledgment(event);
+                        this.broker.getQueue(this.queueName).processAcknowledgment((Message<Message<T>>) message);
                         success = true;
                         endTime = System.currentTimeMillis() + this.timeout;
                         break;
@@ -77,12 +74,22 @@ public class Consumer<T> {
                 }
                 if (!success) {
                     ErrorHandler.logWarning("Failed to process message after " + this.maxRetries + " retries.");
-                    queue.moveToDeadLetterQueue(message);
+                    this.broker.getQueue(this.queueName).moveToDeadLetterQueue((Message<Message<T>>) message);
                 }
-            } else {
-                ErrorHandler.logWarning("Timeout reached without receiving a message.");
             }
         }
+        this.isRunning = false;
+        ErrorHandler.logWarning("Timeout reached without receiving a message.");
+        ErrorHandler.logWarning("Shutting down...");
+        Thread.currentThread().interrupt();
+    }
+
+    public ConsumerMessageQueue<T> getQueue() {
+        return this.queue;
+    }
+
+    public boolean isRunning() {
+        return this.isRunning;
     }
 
     public String getName() {
