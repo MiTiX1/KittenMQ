@@ -1,7 +1,7 @@
 package org.kittenmq.queues;
 
 import org.kittenmq.messages.Message;
-import org.kittenmq.messages.MessageStore;
+import org.kittenmq.persistence.MessageStore;
 
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -15,12 +15,12 @@ public class DeadLetterQueue<T> implements Queue<T>{
 
     public DeadLetterQueue(String name, String messageStorePath) {
         this.name = name;
-        this.messageStore = new MessageStore<>(Paths.get(messageStorePath, this.name + ".dat").toString());;
+        this.messageStore = new MessageStore<>(messageStorePath);
     }
 
     public void enqueue(Message<T> message) throws InterruptedException, IOException {
         this.queue.put(message);
-        messageStore.save(message);
+        messageStore.moveToDeadLetters((Message<Message<T>>) message);
     }
 
     public Message<T> dequeue() throws InterruptedException {
