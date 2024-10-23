@@ -1,5 +1,6 @@
 import org.kittenmq.brokers.Broker;
 import org.kittenmq.consumers.Consumer;
+import org.kittenmq.loadBalancers.RoundRobinLoadBalancer;
 import org.kittenmq.messages.Message;
 import org.kittenmq.producers.Producer;
 import org.kittenmq.queues.MessageQueue;
@@ -18,19 +19,25 @@ public class Main {
         Producer<TestMessage> producer1 = new Producer<>("producer1", broker, "queue1");
 
         // Create consumers and assign message handler callbacks
-        Consumer<TestMessage> consumer1 = new Consumer<>("consumer1", broker, "queue1", Main::processMessage, 10000);
-        Consumer<TestMessage> consumer2 = new Consumer<>("consumer2", broker, "queue1", Main::processMessage, 20000);
+        Consumer<TestMessage> consumer1 = new Consumer<>("consumer1", broker, "queue1", Main::processMessage, 5000);
+        Consumer<TestMessage> consumer2 = new Consumer<>("consumer2", broker, "queue1", Main::processMessage, 5000);
+
+        // Create load balancer and register the consumers
+        RoundRobinLoadBalancer<Message<TestMessage>> loadBalancer = new RoundRobinLoadBalancer<>(queue1);
+        loadBalancer.registerConsumer(consumer1);
+        loadBalancer.registerConsumer(consumer2);
 
         // Register queues and consumers to the broker
         broker.registerQueue(queue1);
         broker.registerConsumer(consumer1);
         broker.registerConsumer(consumer2);
+        broker.registerLoadBalancer(loadBalancer);
 
         // Start the broker service
         broker.run();
 
         // Send messages via producers
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             producer1.sendMessage(new TestMessage("message: " + i, "john", "bob"));
         }
     }
