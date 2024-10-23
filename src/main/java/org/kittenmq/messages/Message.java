@@ -16,19 +16,19 @@ public class Message<T> implements Serializable {
     private boolean acknowledged;
 
     public Message(T payload) {
-        this.uuid = UUID.randomUUID();
-        this.timestamp = System.currentTimeMillis();
-        this.headers = new HashMap<>();
-        this.payload = payload;
-        this.acknowledged = false;
+        this(UUID.randomUUID(), System.currentTimeMillis(), new HashMap<>(), payload, false);
     }
 
     public Message(T payload, Map<String, String> headers) {
-        this.uuid = UUID.randomUUID();
-        this.timestamp = System.currentTimeMillis();
+        this(UUID.randomUUID(), System.currentTimeMillis(), headers, payload, false);
+    }
+
+    public Message(UUID uuid, long timestamp, Map<String, String> headers, T payload, boolean acknowledged) {
+        this.uuid = uuid;
+        this.timestamp = timestamp;
         this.headers = headers;
         this.payload = payload;
-        this.acknowledged = false;
+        this.acknowledged = acknowledged;
     }
 
     public void addHeader(String key, String value) {

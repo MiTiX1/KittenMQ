@@ -8,31 +8,35 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws InterruptedException, IOException {
+        // Initialize the broker
         Broker<TestMessage> broker = new Broker<>();
-        MessageQueue<Message<TestMessage>> queue = new MessageQueue<>("queue1", broker.getDeadLetterQueue(), broker.getMessageStorePath());
-        MessageQueue<Message<TestMessage>> queue2 = new MessageQueue<>("queue2", broker.getDeadLetterQueue(), broker.getMessageStorePath());
-        Producer<TestMessage> producer1 = new Producer<>("producer1", broker, "queue1");
-        Producer<TestMessage> producer2 = new Producer<>("producer2", broker, "queue2");
-        Producer<TestMessage> producer3 = new Producer<>("producer3", broker, "queue1");
-        Consumer<TestMessage> consumer1 = new Consumer<>("consumer1", broker, "queue1", Main::foo, 10000);
-        Consumer<TestMessage> consumer2 = new Consumer<>("consumer2", broker, "queue1", Main::foo, 20000);
-        Consumer<TestMessage> consumer3 = new Consumer<>("consumer3", broker, "queue2", Main::foo, 20000);
 
-        broker.registerQueue(queue);
-        broker.registerQueue(queue2);
+        // Create message queues
+        MessageQueue<Message<TestMessage>> queue1 = new MessageQueue<>("queue1", broker.getDeadLetterQueue(), broker.getMessageStorePath());
+
+        // Create producers
+        Producer<TestMessage> producer1 = new Producer<>("producer1", broker, "queue1");
+
+        // Create consumers and assign message handler callbacks
+        Consumer<TestMessage> consumer1 = new Consumer<>("consumer1", broker, "queue1", Main::processMessage, 10000);
+        Consumer<TestMessage> consumer2 = new Consumer<>("consumer2", broker, "queue1", Main::processMessage, 20000);
+
+        // Register queues and consumers to the broker
+        broker.registerQueue(queue1);
         broker.registerConsumer(consumer1);
         broker.registerConsumer(consumer2);
-        broker.registerConsumer(consumer3);
+
+        // Start the broker service
         broker.run();
 
-        producer3.sendMessage(new TestMessage("message: 20" , "john", "bob"));
+        // Send messages via producers
         for (int i = 0; i < 5; i++) {
             producer1.sendMessage(new TestMessage("message: " + i, "john", "bob"));
         }
-        producer2.sendMessage(new TestMessage("message: 10", "john", "bob"));
     }
 
-    public static void foo(Message<TestMessage> message) {
+    // Message handler function
+    public static void processMessage(Message<TestMessage> message) {
         System.out.println("message: " + message.getPayload());
     }
 }

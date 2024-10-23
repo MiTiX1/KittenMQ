@@ -65,7 +65,7 @@ public class Consumer<T> {
                         System.out.println("---" + this.getName() + "---");
                         callback.process(message);
                         AcknowledgmentEvent event = new AcknowledgmentEvent<>(message);
-//                        queue.processAcknowledgment(event);
+                        queue.processAcknowledgment(event);
                         success = true;
                         endTime = System.currentTimeMillis() + this.timeout;
                         break;
