@@ -42,7 +42,7 @@ public class Broker<T> {
         this.consumers.get(consumer.getQueueName()).add(consumer);
     }
 
-    public void registerLoadBalancer(RoundRobinLoadBalancer<T> loadBalancer) {
+    public void registerLoadBalancer(LoadBalancer<T> loadBalancer) {
         if (!loadBalancers.containsKey(loadBalancer.getQueue().getName())) {
             this.loadBalancers.put(loadBalancer.getQueue().getName(), loadBalancer);
         }
