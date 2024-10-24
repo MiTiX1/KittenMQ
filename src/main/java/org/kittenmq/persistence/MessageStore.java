@@ -126,7 +126,6 @@ public class MessageStore<T> {
             insertStmt.setBytes(4, serializePayload(message.getPayload()));
             insertStmt.executeUpdate();
 
-            // Delete the message from the messages table
             deleteStmt.setString(1, message.getUuid().toString());
             deleteStmt.executeUpdate();
         } catch (SQLException | IOException e) {

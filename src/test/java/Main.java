@@ -13,8 +13,7 @@ public class Main {
         Broker<TestMessage> broker = new Broker<>();
 
         // Create message queues
-        MessageQueue<Message<TestMessage>> queue1 = new MessageQueue<>("queue1", broker.getDeadLetterQueue(), broker.getMessageStorePath());
-
+        MessageQueue<TestMessage> queue1 = new MessageQueue<>("queue1", broker.getDeadLetterQueue(), broker.getMessageStorePath());
         // Create producers
         Producer<TestMessage> producer1 = new Producer<>("producer1", broker, "queue1");
 
@@ -23,7 +22,7 @@ public class Main {
         Consumer<TestMessage> consumer2 = new Consumer<>("consumer2", broker, "queue1", Main::processMessage, 5000);
 
         // Create load balancer and register the consumers
-        RoundRobinLoadBalancer<Message<TestMessage>> loadBalancer = new RoundRobinLoadBalancer<>(queue1);
+        RoundRobinLoadBalancer<TestMessage> loadBalancer = new RoundRobinLoadBalancer<>(queue1);
         loadBalancer.registerConsumer(consumer1);
         loadBalancer.registerConsumer(consumer2);
 
@@ -37,7 +36,7 @@ public class Main {
         broker.run();
 
         // Send messages via producers
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             producer1.sendMessage(new TestMessage("message: " + i, "john", "bob"));
         }
     }

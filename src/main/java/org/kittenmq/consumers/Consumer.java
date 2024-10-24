@@ -5,7 +5,6 @@ import org.kittenmq.brokers.Broker;
 import org.kittenmq.errors.ErrorHandler;
 import org.kittenmq.messages.Message;
 import org.kittenmq.queues.ConsumerMessageQueue;
-import org.kittenmq.queues.MessageQueue;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -46,7 +45,6 @@ public class Consumer<T>{
         this(name, broker, queueName, callback, Consumer.MAX_RETRIES, Consumer.RETRY_DELAY, Consumer.MAX_RETRIES);
     }
 
-    @SuppressWarnings("unchecked")
     public void consume() throws InterruptedException, IOException {
         long startTime = System.currentTimeMillis();
         long endTime = startTime + this.timeout;
@@ -62,7 +60,7 @@ public class Consumer<T>{
                     try {
                         System.out.println("---" + this.getName() + "---");
                         callback.process(message);
-                        this.broker.getQueue(this.queueName).processAcknowledgment((Message<Message<T>>) message);
+                        this.broker.getQueue(this.queueName).processAcknowledgment(message);
                         success = true;
                         endTime = System.currentTimeMillis() + this.timeout;
                         break;
@@ -74,7 +72,7 @@ public class Consumer<T>{
                 }
                 if (!success) {
                     ErrorHandler.logWarning("Failed to process message after " + this.maxRetries + " retries.");
-                    this.broker.getQueue(this.queueName).moveToDeadLetterQueue((Message<Message<T>>) message);
+                    this.broker.getQueue(this.queueName).moveToDeadLetterQueue(message);
                 }
             }
         }
