@@ -14,10 +14,10 @@ import java.util.List;
 import java.util.Map;
 
 public class Broker<T> {
-    private final Map<String, MessageQueue<Message<T>>> queues = new HashMap<>();
-    private final DeadLetterQueue<Message<T>> deadLetterQueue;
+    private final Map<String, MessageQueue<T>> queues = new HashMap<>();
+    private final DeadLetterQueue<T> deadLetterQueue;
     private final Map<String, List<Consumer<T>>> consumers = new HashMap<>();
-    private final Map<String, LoadBalancer<Message<T>>> loadBalancers = new HashMap<>();
+    private final Map<String, LoadBalancer<T>> loadBalancers = new HashMap<>();
     private final String messageStorePath;
 
     public Broker(String messageStorePath) {
@@ -29,7 +29,7 @@ public class Broker<T> {
         this("message-store");
     }
 
-    public void registerQueue(MessageQueue<Message<T>> queue) {
+    public void registerQueue(MessageQueue<T> queue) {
         if (!queues.containsKey(queue.getName())) {
             this.queues.put(queue.getName(), queue);
         }
@@ -42,7 +42,7 @@ public class Broker<T> {
         this.consumers.get(consumer.getQueueName()).add(consumer);
     }
 
-    public void registerLoadBalancer(RoundRobinLoadBalancer<Message<T>> loadBalancer) {
+    public void registerLoadBalancer(LoadBalancer<T> loadBalancer) {
         if (!loadBalancers.containsKey(loadBalancer.getQueue().getName())) {
             this.loadBalancers.put(loadBalancer.getQueue().getName(), loadBalancer);
         }
@@ -57,11 +57,11 @@ public class Broker<T> {
         }
     }
 
-    public MessageQueue<Message<T>> getQueue(String queueName) {
-        return queues.get(queueName);
+    public MessageQueue<T> getQueue(String queueName) {
+        return this.queues.get(queueName);
     }
 
-    public DeadLetterQueue<Message<T>> getDeadLetterQueue() {
+    public DeadLetterQueue<T> getDeadLetterQueue() {
         return this.deadLetterQueue;
     }
 

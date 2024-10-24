@@ -5,7 +5,7 @@ import org.kittenmq.messages.Message;
 import org.kittenmq.queues.MessageQueue;
 
 public interface LoadBalancer<T> {
-    <U> void registerConsumer(Consumer<U> consumer);
+    void registerConsumer(Consumer<T> consumer);
     void run();
     Consumer<T> getNextConsumer();
     Message<T> getNextMessage() throws InterruptedException;
